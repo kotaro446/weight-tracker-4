@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体重維持ダッシュボード | ウェイトトラッカー</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #1abc9c;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --success-color: #2ecc71;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            padding-top: 56px;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .nav-link.active {
+            color: white !important;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .rank-badge {
+            font-size: 2rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .rank-A {
+            background-color: var(--success-color);
+        }
+
+        .rank-B {
+            background-color: var(--warning-color);
+        }
+
+        .rank-C {
+            background-color: var(--danger-color);
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .weight-table th {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .weight-form {
+            background-color: rgba(26, 188, 156, 0.05);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+
+        .page-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ダッシュボードヘッダー -->
+    <header class="dashboard-header">
+        <div class="container">
+            <h1 class="display-5 fw-bold"><i class="fas fa-tachometer-alt me-2"></i>ダッシュボード</h1>
+            <p class="lead">あなたの体重維持をサポートします</p>
+        </div>
+    </header>
+
+    <div class="container page-transition">
+        <!-- メインコンテンツ -->
+        <div class="row mb-4">
+            <!-- 状態カード -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-weight me-2"></i>現在の状態</h5>
+                    </div>
+                    <div class="card-body stat-card">
+                        <div th:if="${latestWeight}" class="stat-value" th:text="${latestWeight} + ' kg'">70.0 kg</div>
+                        <div th:unless="${latestWeight}" class="stat-value text-muted">-- kg</div>
+                        <div class="stat-label">最新の体重</div>
+
+                        <div th:if="${rank}" class="my-4">
+                            <div class="rank-badge" th:class="'rank-badge rank-' + ${rank}" th:text="${rank}">A</div>
+                            <div class="mt-2 text-muted">現在のランク</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 平均体重カード -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>平均データ</h5>
+                    </div>
+                    <div class="card-body stat-card">
+                        <div th:if="${averageWeight}" class="stat-value"
+                            th:text="${#numbers.formatDecimal(averageWeight, 1, 1)} + ' kg'">70.0 kg</div>
+                        <div th:unless="${averageWeight}" class="stat-value text-muted">-- kg</div>
+                        <div class="stat-label">平均体重</div>
+
+                        <div class="mt-4" th:if="${averageWeight != null && latestWeight != null}">
+                            <div class="stat-value" th:with="diff=${latestWeight - averageWeight}"
+                                th:text="(${diff} >= 0 ? '+' : '') + ${#numbers.formatDecimal(diff, 1, 1)} + ' kg'"
+                                th:style="'color: ' + (${diff} > 0 ? 'var(--danger-color)' : (${diff} < 0 ? 'var(--success-color)' : 'inherit'))">
+                                +0.5 kg
+                            </div>
+                            <div class="stat-label">平均との差</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- クイック入力カード -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>体重を記録</h5>
+                    </div>
+                    <div class="card-body weight-form">
+                        <form th:action="@{/add}" method="post" class="py-2">
+                            <div class="mb-3">
+                                <label for="recordedDate" class="form-label">日付</label>
+                                <input type="date" class="form-control" id="recordedDate" name="recordedDate"
+                                    th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="weight" class="form-label">体重 (kg)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" id="weight" name="weight"
+                                        placeholder="例: 70.5" step="0.1" min="30" max="300" required>
+                                    <span class="input-group-text">kg</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-save me-2"></i>記録する
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 体重履歴 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>最近の記録</h5>
+                <a href="/history" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>すべて表示
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover weight-table">
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>体重 (kg)</th>
+                                <th>平均との差</th>
+                                <th>削除</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="record, stat : ${weightRecords}" th:if="${stat.index < 5}">
+                                <td>
+                                    <a th:href="@{/details/{id}(id=${record.id})}" class="text-decoration-none">
+                                        <strong th:text="${record.recordedDate}">2025-05-01</strong>
+                                    </a>
+                                </td>
+                                <td th:text="${record.weight} + ' kg'">70.0 kg</td>
+                                <td th:if="${averageWeight != null}">
+                                    <span th:with="diff=${record.weight - averageWeight}"
+                                        th:text="(${diff} >= 0 ? '+' : '') + ${#numbers.formatDecimal(diff, 1, 1)} + ' kg'"
+                                        th:class="'badge ' + (${diff > 1.0} ? 'bg-danger' : (${diff < -1.0} ? 'bg-success' : (${diff > 0.5 || diff < -0.5} ? 'bg-warning text-dark' : 'bg-info text-dark')))">
+                                        +0.5 kg
+                                    </span>
+                                </td>
+                                <td th:unless="${averageWeight != null}">--</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/delete/{id}(id=${record.id})}" class="btn btn-outline-danger"
+                                            onclick="return confirm('この記録を削除してもよろしいですか？')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${weightRecords == null || weightRecords.isEmpty()}">
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>記録がありません
+                                    </div>
+                                    <small>右上の「体重を記録」から最初の記録を追加しましょう</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3" th:if="${weightRecords != null && weightRecords.size() > 5}">
+                    <a href="/history" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>すべての記録を見る (全 <span th:text="${weightRecords.size()}">20</span>
+                        件)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スコアの詳細セクション -->
+    <div class="container page-transition">
+        <div class="card mb-5">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-star me-2"></i>スコアの詳細</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">あなたの体重は平均値との差に基づいて評価されます。以下の基準でスコアが決まります：</p>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-success">
+                            <div class="card-body text-center">
+                                <div class="rank-badge rank-A mb-3">A</div>
+                                <h5 class="card-title">優秀</h5>
+                                <p class="card-text">平均体重から <strong>±0.5kg</strong> 以内</p>
+                                <div class="text-muted small">理想的な体重維持ができています</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-warning">
+                            <div class="card-body text-center">
+                                <div class="rank-badge rank-B mb-3">B</div>
+                                <h5 class="card-title">良好</h5>
+                                <p class="card-text">平均体重から <strong>±0.5〜1.0kg</strong></p>
+                                <div class="text-muted small">許容範囲内ですが注意が必要です</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-danger">
+                            <div class="card-body text-center">
+                                <div class="rank-badge rank-C mb-3">C</div>
+                                <h5 class="card-title">要注意</h5>
+                                <p class="card-text">平均体重から <strong>±1.0kg</strong> 以上</p>
+                                <div class="text-muted small">平均との差が大きいので対策を検討しましょう</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    平均体重は直近の最大60件のデータから算出されます。より正確な評価のために、定期的に体重を記録しましょう。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター - historyページと同様に最下部にのみ配置 -->
+    <footer class="mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-weight me-2"></i>ウェイトトラッカー</h5>
+                    <p class="small">あなたの健康をサポートする体重管理アプリ</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 簡単なページ遷移エフェクト
+        document.addEventListener('DOMContentLoaded', () => {
+            const pageContent = document.querySelector('.page-transition');
+            pageContent.style.opacity = '0';
+
+            setTimeout(() => {
+                pageContent.style.opacity = '1';
+            }, 100);
+
+            // ナビゲーションリンクにクリックイベントを追加
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    // 実際のリンクは有効（この例では preventDefault は使わない）
+                    // ただし遷移前にフェードアウト効果を追加
+                    pageContent.style.opacity = '0';
+                });
+            });
+        });
+    </script>
+</body>
+<!-- ここに天気情報と健康アドバイスセクションを追加 -->
+<div class="container page-transition">
+    <div class="card mb-5 mt-5">
+        <!-- 天気情報と健康アドバイスの内容 -->
+    </div>
+</div>
+
+
+
+<!-- 天気情報と健康アドバイスセクション -->
+<!-- スコアの詳細セクションの後に追加する部分 -->
+<div class="container page-transition">
+    <div class="card mb-5 mt-5">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-cloud-sun me-2"></i>今日の天気と健康アドバイス</h5>
+        </div>
+        <div class="card-body">
+            <!-- 天気情報が取得できなかった場合の表示 -->
+            <div th:if="${weatherData == null || weatherData.isEmpty()}" class="text-center py-4">
+                <div class="text-muted">
+                    <i class="fas fa-exclamation-circle me-2"></i>天気情報を取得できませんでした
+                </div>
+                <small>一般的に、定期的な運動と十分な水分補給を心がけましょう</small>
+            </div>
+
+            <!-- 天気情報が取得できた場合の表示 -->
+            <div th:if="${weatherData != null && !weatherData.isEmpty()}" class="row">
+                <!-- 左側：天気情報 -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-info">
+                        <div class="card-body text-center">
+                            <!-- 天気アイコン -->
+                            <img th:if="${weatherData.weather != null && !weatherData.weather.isEmpty()}"
+                                th:src="'https://openweathermap.org/img/wn/' + ${weatherData.weather[0].icon} + '@2x.png'"
+                                alt="Weather Icon" width="100" height="100" class="my-2">
+                            <!-- 都市名 -->
+                            <h4 th:text="${weatherData.name != null ? weatherData.name : '東京'}">東京</h4>
+
+                            <!-- 天気情報 -->
+                            <p th:if="${weatherData.weather != null && !weatherData.weather.isEmpty()}"
+                                th:text="${weatherData.weather[0].description}" class="fs-5">晴れ</p>
+
+                            <!-- 気温 -->
+                            <div class="stat-value" th:if="${weatherData.main != null}"
+                                th:text="${#numbers.formatDecimal(weatherData.main.temp, 1, 1)} + '°C'">20.0°C</div>
+                            <div class="small text-muted">現在の気温</div>
+
+                            <!-- 湿度 -->
+                            <div class="mt-3" th:if="${weatherData.main != null}">
+                                <div class="fs-5" th:text="${weatherData.main.humidity} + '%'">50%</div>
+                                <div class="small text-muted">湿度</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右側：健康アドバイス -->
+                <div class="col-md-8">
+                    <div class="card h-100 border-success">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4"><i class="fas fa-heartbeat me-2"></i>今日の健康アドバイス</h4>
+
+                            <!-- 天気に基づいた健康アドバイス -->
+                            <div class="alert alert-success">
+                                <p class="fs-5 mb-0" th:text="${healthAdvice}">
+                                    今日は気温が高いため、室内での軽いエクササイズがおすすめです。水分補給も忘れずに行いましょう。
+                                </p>
+                            </div>
+
+                            <!-- 天気に合わせた追加情報 -->
+                            <div class="mt-4">
+                                <h5><i class="fas fa-lightbulb me-2"></i>ワンポイントアドバイス</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex align-items-center"
+                                        th:if="${weatherData.main != null && weatherData.main.temp > 25}">
+                                        <i class="fas fa-tint text-primary me-3 fs-5"></i>
+                                        <span>暑い日は通常より水分をしっかり摂取しましょう。体重維持にも効果的です。</span>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center"
+                                        th:if="${weatherData.main != null && weatherData.main.temp < 15}">
+                                        <i class="fas fa-running text-success me-3 fs-5"></i>
+                                        <span>寒い日は体を十分に温めてから運動を始めましょう。</span>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center"
+                                        th:if="${weatherData.weather != null && !weatherData.weather.isEmpty() && weatherData.weather[0].main == 'Rain'}">
+                                        <i class="fas fa-home text-warning me-3 fs-5"></i>
+                                        <span>雨の日は室内でのストレッチや筋トレで体を動かしましょう。</span>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="fas fa-balance-scale text-danger me-3 fs-5"></i>
+                                        <span>体重管理には規則正しい食事と適度な運動が大切です。</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>
