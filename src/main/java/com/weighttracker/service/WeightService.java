@@ -96,4 +96,8 @@ public class WeightService {
         WeightRecord record = new WeightRecord(userId, weight, recordedDate);
         return weightRecordRepository.save(record);
     }
+    //平田「データベースから全記録を取得する処理」をサービス層に実装して、CSVダウンロードの材料をそろえる
+    public List<WeightRecord> getAllWeightRecords() {
+        return weightRecordRepository.findAll();
+    }
 }

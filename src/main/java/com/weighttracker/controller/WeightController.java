@@ -1,5 +1,7 @@
 package com.weighttracker.controller;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.weighttracker.entity.WeightRecord;
 import com.weighttracker.service.WeatherService;
 import com.weighttracker.service.WeightService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/")  // ベースURLを明示的に指定
@@ -154,4 +158,36 @@ public class WeightController {
         }
         return "redirect:/";
     }
+    // （平田）CSVエクスポート機能
+    // URLでアクセスされるようにする
+    @GetMapping("/export")
+    public void exportCSV(HttpServletResponse response) throws IOException {
+        // ブラウザにCSVだと教える
+        response.setContentType("text/csv");
+        // CSVファイル名を指定
+        response.setHeader("Content-Disposition", "attachment; filename=\"weight_records.csv\"");
+
+        // データベースから体重記録を取得する
+        List<WeightRecord> records = weightService.getAllWeightRecords();
+
+        // 書き出し用のペンを準備
+        PrintWriter writer = response.getWriter();
+        // CSVのヘッダーを書き込む("ID,体重,記録日")
+        writer.println("ID,UserID,Weight,Timestamp");
+
+        // データを1行ずつ書き出す
+        for (WeightRecord record : records) {
+            writer.println(String.format("%d,%d,%.2f,%s", 
+                record.getId(), 
+                record.getUserId(), 
+                record.getWeight(), 
+                record.getRecordedDate(),
+                record.getTimestamp()));
+
+        }
+        writer.flush(); // 溜まってるデータを出し切る
+        writer.close(); // 道具をちゃんと閉じる
+
+    }
+    
 }
